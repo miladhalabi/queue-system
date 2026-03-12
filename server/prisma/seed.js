@@ -26,6 +26,14 @@ async function main() {
     }
   });
   console.log('Admin user created:', admin.username);
+
+  // Initialize Settings
+  await prisma.setting.upsert({
+    where: { key: 'requireReason' },
+    update: {},
+    create: { key: 'requireReason', value: 'false' }
+  });
+  console.log('Default settings initialized');
 }
 
 main()

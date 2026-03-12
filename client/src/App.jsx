@@ -6,13 +6,14 @@ import { User, ShieldCheck, Moon, Sun, Languages } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 function App() {
-  const { isAdmin, setAdmin, initSocket, fetchActive, fetchStats, theme, toggleTheme } = useQueueStore();
+  const { isAdmin, setAdmin, initSocket, fetchActive, fetchStats, fetchSettings, theme, toggleTheme } = useQueueStore();
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
     initSocket();
     fetchActive();
     fetchStats();
+    fetchSettings();
     // Initialize theme
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, []);

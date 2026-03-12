@@ -1,21 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useQueueStore } from '../store/useQueueStore';
-import { UserPlus, LogOut, Info, CheckCircle, Bell } from 'lucide-react';
+import { UserPlus, LogOut, Info, CheckCircle, Bell, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const ClientView = () => {
   const { t, i18n } = useTranslation();
-  const { myEntry, joinQueue, leaveQueue, refreshMyStatus } = useQueueStore();
+  const { myEntry, joinQueue, leaveQueue, refreshMyStatus, settings } = useQueueStore();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const requireReason = settings.requireReason === 'true';
 
   const handleJoin = async (e) => {
     e.preventDefault();
     if (!name) return;
+    if (requireReason && !reason) return;
     setLoading(true);
     try {
-      await joinQueue(name, phone);
+      await joinQueue(name, phone, reason);
     } catch (err) {
       alert('Failed to join queue');
     } finally {
@@ -82,6 +86,16 @@ const ClientView = () => {
           </button>
         </div>
 
+        {myEntry.clientReason && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-gray-100 dark:border-slate-800 shadow-sm transition-colors">
+            <div className="flex items-center gap-2 mb-2 text-gray-400 dark:text-gray-500">
+              <MessageSquare size={16} />
+              <p className="text-xs font-bold uppercase tracking-tighter">{t('admin.reason')}</p>
+            </div>
+            <p className="text-gray-700 dark:text-gray-300 italic">"{myEntry.clientReason}"</p>
+          </div>
+        )}
+
         {isNext && (
           <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 rounded-2xl p-4 flex gap-3 items-start transition-colors text-right rtl:text-right">
             <Bell className="text-indigo-600 dark:text-indigo-400 mt-1 shrink-0" />
@@ -122,6 +136,20 @@ const ClientView = () => {
             onChange={(e) => setPhone(e.target.value)}
             placeholder="555-0123"
             className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">
+            {requireReason ? t('admin.reason') : t('client.reason_label')}
+          </label>
+          <textarea 
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            required={requireReason}
+            placeholder="..."
+            rows="2"
+            className="w-full px-5 py-4 rounded-2xl bg-gray-50 dark:bg-slate-800 border-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none"
           />
         </div>
 

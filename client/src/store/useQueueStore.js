@@ -24,6 +24,7 @@ export const useQueueStore = create((set, get) => ({
   adminUser: JSON.parse(localStorage.getItem('adminUser')) || null,
   adminToken: localStorage.getItem('adminToken') || null,
   theme: localStorage.getItem('theme') || 'light',
+  settings: { requireReason: 'false' },
 
   setEntries: (entries) => set({ entries }),
   setAdmin: (isAdmin) => set({ isAdmin }),
@@ -33,6 +34,24 @@ export const useQueueStore = create((set, get) => ({
     set({ theme: nextTheme });
     localStorage.setItem('theme', nextTheme);
     document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+  },
+
+  fetchSettings: async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/settings`);
+      set({ settings: res.data });
+    } catch (err) {
+      console.error('Fetch settings failed', err);
+    }
+  },
+
+  updateSetting: async (key, value) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/settings`, { key, value });
+      set({ settings: res.data });
+    } catch (err) {
+      console.error('Update setting failed', err);
+    }
   },
 
   login: async (username, password) => {
@@ -47,6 +66,7 @@ export const useQueueStore = create((set, get) => ({
       get().fetchActive();
       get().fetchHistory();
       get().fetchStats();
+      get().fetchSettings();
       
       return true;
     } catch (err) {
@@ -94,9 +114,9 @@ export const useQueueStore = create((set, get) => ({
     }
   },
 
-  joinQueue: async (name, phone) => {
+  joinQueue: async (name, phone, reason) => {
     try {
-      const res = await axios.post(`${API_URL}/api/queue/join`, { name, phone });
+      const res = await axios.post(`${API_URL}/api/queue/join`, { name, phone, reason });
       set({ myEntry: res.data });
       localStorage.setItem('myEntry', JSON.stringify(res.data));
       return res.data;
@@ -153,6 +173,10 @@ export const useQueueStore = create((set, get) => ({
           get().refreshMyStatus();
         }
       }
+    });
+
+    socket.on('settings_update', (updatedSettings) => {
+      set({ settings: updatedSettings });
     });
 
     socket.on('connect', () => console.log('Connected to WebSocket'));

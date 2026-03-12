@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useQueueStore } from '../store/useQueueStore';
 import AdminLogin from './AdminLogin';
-import { Users, CheckCircle, ArrowRightCircle, UserMinus, Clock, LogOut, History, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, CheckCircle, ArrowRightCircle, UserMinus, Clock, LogOut, History, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const AdminView = () => {
   const { t, i18n } = useTranslation();
-  const { entries, history, stats, callNext, skipEntry, adminToken, adminUser, logout, fetchActive, fetchHistory, fetchStats } = useQueueStore();
+  const { entries, history, stats, settings, updateSetting, callNext, skipEntry, adminToken, adminUser, logout, fetchActive, fetchHistory, fetchStats } = useQueueStore();
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
@@ -16,6 +16,10 @@ const AdminView = () => {
       fetchHistory();
     }
   }, [adminToken]);
+
+  const handleToggleRequireReason = () => {
+    updateSetting('requireReason', settings.requireReason === 'true' ? 'false' : 'true');
+  };
 
   const handleSkip = (id) => {
     const reason = prompt(t('common.reason_placeholder'));
@@ -32,7 +36,7 @@ const AdminView = () => {
   return (
     <div className="space-y-8">
       {/* Admin Header */}
-      <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm transition-colors">
+      <div className="flex flex-col md:flex-row items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm transition-colors gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-400 font-bold uppercase transition-colors">
             {adminUser?.username?.[0] || 'A'}
@@ -42,6 +46,26 @@ const AdminView = () => {
             <p className="font-bold text-gray-800 dark:text-gray-200 transition-colors">{adminUser?.username}</p>
           </div>
         </div>
+
+        {/* Require Reason Toggle */}
+        <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-800/50 px-4 py-2 rounded-xl border border-gray-100 dark:border-slate-800">
+          <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{t('client.reason_label')}</span>
+          <button
+            onClick={handleToggleRequireReason}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+              settings.requireReason === 'true' ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                settings.requireReason === 'true' 
+                  ? (i18n.language === 'ar' ? '-translate-x-6' : 'translate-x-6') 
+                  : (i18n.language === 'ar' ? '-translate-x-1' : 'translate-x-1')
+              }`}
+            />
+          </button>
+        </div>
+
         <button 
           onClick={logout}
           className="flex items-center gap-2 text-gray-500 hover:text-red-500 font-semibold px-4 py-2 rounded-xl transition-colors"
@@ -80,7 +104,15 @@ const AdminView = () => {
           {calledEntry ? (
             <div className="flex items-baseline gap-3">
               <span className="text-5xl font-black">#{calledEntry.ticketNumber}</span>
-              <span className="text-xl font-medium text-indigo-100 dark:text-indigo-200">{calledEntry.clientName}</span>
+              <div className="flex flex-col">
+                <span className="text-xl font-medium text-indigo-100 dark:text-indigo-200">{calledEntry.clientName}</span>
+                {calledEntry.clientReason && (
+                   <span className="text-xs text-indigo-300 flex items-center gap-1">
+                     <MessageSquare size={12} />
+                     {calledEntry.clientReason}
+                   </span>
+                )}
+              </div>
             </div>
           ) : (
             <p className="text-2xl font-bold text-indigo-100">{t('admin.no_one')}</p>
@@ -110,6 +142,7 @@ const AdminView = () => {
               <tr>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('admin.ticket')}</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('admin.name')}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('admin.reason')}</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('admin.status')}</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right rtl:text-left">{t('admin.actions')}</th>
               </tr>
@@ -117,7 +150,7 @@ const AdminView = () => {
             <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
               {entries.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
+                  <td colSpan="5" className="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
                     {t('admin.empty_queue')}
                   </td>
                 </tr>
@@ -130,6 +163,11 @@ const AdminView = () => {
                     <td className="px-6 py-4">
                       <p className="font-bold text-gray-900 dark:text-gray-100 transition-colors">{entry.clientName}</p>
                       <p className="text-xs text-gray-400 dark:text-gray-500 transition-colors">{entry.clientPhone || 'No phone'}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate" title={entry.clientReason}>
+                        {entry.clientReason || '-'}
+                      </p>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${
@@ -175,6 +213,7 @@ const AdminView = () => {
                 <tr>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('admin.ticket')}</th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('admin.name')}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('admin.reason')}</th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('admin.status')}</th>
                   <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-right rtl:text-left">{t('admin.completed_at')}</th>
                 </tr>
@@ -182,7 +221,7 @@ const AdminView = () => {
               <tbody className="divide-y divide-gray-100 dark:divide-slate-800">
                 {history.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
+                    <td colSpan="5" className="px-6 py-12 text-center text-gray-400 dark:text-gray-500">
                       {t('admin.history_empty')}
                     </td>
                   </tr>
@@ -194,6 +233,11 @@ const AdminView = () => {
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-gray-700 dark:text-gray-300 transition-colors">{entry.clientName}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-xs text-gray-500 dark:text-gray-500 truncate max-w-[150px]">
+                          {entry.clientReason || '-'}
+                        </p>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
