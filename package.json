@@ -1,0 +1,20 @@
+{
+  "name": "queue-system",
+  "version": "1.0.0",
+  "description": "Production ready queue system",
+  "scripts": {
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "build:client": "cd client && npm run build",
+    "prisma:generate": "cd server && npx prisma generate",
+    "build": "npm run build:client && npm run prisma:generate",
+    "start": "cd server && NODE_ENV=production node index.js",
+    "simulate": "node simulate.js",
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "axios": "^1.13.6"
+  }
+}

@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+}
+
+model Queue {
+  id        Int          @id @default(autoincrement())
+  name      String       @db.VarChar(100)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  entries   QueueEntry[]
+}
+
+model QueueEntry {
+  id           Int       @id @default(autoincrement())
+  queueId      Int
+  queue        Queue     @relation(fields: [queueId], references: [id])
+  clientName   String    @db.VarChar(100)
+  clientPhone  String?   @db.VarChar(20)
+  ticketNumber Int
+  status       String    @default("waiting") // waiting, called, served, skipped
+  joinedAt     DateTime  @default(now())
+  calledAt     DateTime?
+  servedAt     DateTime?
+  skipReason   String?   @db.Text
+  telegramChatId String?
+  clientReason   String?   @db.Text
+
+  @@index([status])
+  @@index([queueId])
+}
