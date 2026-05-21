@@ -9,6 +9,7 @@
     "build": "npm run build:client && npm run prisma:generate",
     "start": "cd server && NODE_ENV=production node index.js",
     "simulate": "node simulate.js",
+    "test": "cd server && npm test",
     "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\""
   },
   "devDependencies": {
